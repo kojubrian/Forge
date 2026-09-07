@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Create Account | Execution System</title>
+
+    <link rel="stylesheet" href="/css/auth.css">
+</head>
+
+<body>
+
+    <!-- Background -->
+    <div class="background">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+
+    <!-- Registration -->
+    <main class="auth-container">
+
+        <div class="glass-card">
+
+            <!-- Logo -->
+            <div class="logo">
+                <span>EXECUTE</span>
+            </div>
+
+
+            <!-- Heading -->
+            <div class="heading">
+                <h1>Create your account.</h1>
+
+                <p>
+                    Start building consistency, one day at a time.
+                </p>
+            </div>
+
+
+            <!-- Error message -->
+            <% if (typeof error !== 'undefined' && error) { %>
+
+                <div class="error-message">
+                    <%= error %>
+                </div>
+
+            <% } %>
+
+
+            <!-- Registration Form -->
+            <form action="/register" method="POST" class="login-form">
+
+                <!-- Name -->
+                <div class="input-group">
+
+                    <label for="name">
+                        Full Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="name"
+                        name="userName"
+                        placeholder="Enter your full name"
+                        required
+                        autocomplete="name"
+                    >
+
+                </div>
+
+
+                <!-- Email -->
+                <div class="input-group">
+
+                    <label for="email">
+                        Email
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        required
+                        autocomplete="email"
+                    >
+
+                </div>
+
+
+                <!-- Password -->
+                <div class="input-group">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Create a password"
+                        required
+                        minlength="8"
+                        autocomplete="new-password"
+                    >
+
+                    <small class="input-hint">
+                        Use at least 8 characters.
+                    </small>
+
+                </div>
+
+
+                <!-- Confirm Password -->
+                <div class="input-group">
+
+                    <label for="confirmPassword">
+                        Confirm Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        placeholder="Confirm your password"
+                        required
+                        minlength="8"
+                        autocomplete="new-password"
+                    >
+
+                </div>
+
+
+                <!-- Terms -->
+                <div class="remember-me">
+
+                    <label>
+
+                        <input
+                            type="checkbox"
+                            name="terms"
+                            required
+                        >
+
+                        <span>
+                            I agree to the terms and conditions
+                        </span>
+
+                    </label>
+
+                </div>
+
+
+                <!-- Submit -->
+                <button
+                    type="submit"
+                    class="login-btn"
+                >
+
+                    <span>
+                        Create Account
+                    </span>
+
+                    <span class="arrow">
+                        →
+                    </span>
+
+                </button>
+
+            </form>
+
+
+            <!-- Divider -->
+            <div class="divider">
+                <span>or</span>
+            </div>
+
+
+            <!-- Login -->
+            <p class="register-text">
+
+                Already have an account?
+
+                <a href="/login">
+                    Login
+                </a>
+
+            </p>
+
+        </div>
+
+    </main>
+
+</body>
+</html>

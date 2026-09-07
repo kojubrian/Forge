@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard | Forge</title>
+
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+
+<body>
+
+    <div class="dashboard">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+
+            <div class="brand">
+                <div class="brand-mark">F</div>
+                <span>FORGE</span>
+            </div>
+
+            <nav class="navigation">
+
+                <a href="/dashboard" class="nav-item active">
+                    <span class="nav-icon">⌂</span>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">✓</span>
+                    <span>Tasks</span>
+                </a>
+
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">◷</span>
+                    <span>History</span>
+                </a>
+
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">↗</span>
+                    <span>Analytics</span>
+                </a>
+
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">◎</span>
+                    <span>Goals</span>
+                </a>
+
+            </nav>
+
+            <div class="sidebar-bottom">
+
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">⚙</span>
+                    <span>Settings</span>
+                </a>
+
+                <a href="/logout" class="nav-item logout">
+                    <span class="nav-icon">↪</span>
+                    <span>Logout</span>
+                </a>
+
+            </div>
+
+        </aside>
+
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <!-- HEADER -->
+            <header class="topbar">
+
+                <div>
+                    <p class="eyebrow">YOUR EXECUTION SYSTEM</p>
+
+                    <h1>
+                        Good evening, <%= userName || "there" %>.
+                    </h1>
+
+                    <p class="date">
+                        <%= new Date().toLocaleDateString("en-US", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric"
+                        }) %>
+                    </p>
+                </div>
+
+                <div class="profile">
+                    <div class="avatar">
+                        <%= (userName || "U").charAt(0).toUpperCase() %>
+                    </div>
+                </div>
+
+            </header>
+
+
+            <!-- STATS -->
+            <section class="stats-grid">
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>Today's Progress</span>
+                        <span class="stat-icon">◔</span>
+                    </div>
+
+                    <div class="stat-value"><%= progress %>%</div>
+
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: <%= progress %>%;"></div>
+                    </div>
+
+                    <p class="stat-description">
+                        Start executing today.
+                    </p>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>Tasks Completed</span>
+                        <span class="stat-icon">✓</span>
+                    </div>
+
+                    <div class="stat-value"><%= completedTasks %><span class="stat-small"> / <%= totalTasks %></span></div>
+
+                    <p class="stat-description">
+                        <% if (totalTasks === 0) { %>
+                            No tasks for today yet.
+                        <% } else if (progress === 100) { %>
+                            All tasks completed. Excellent execution.
+                        <% } else { %>
+                            Keep executing. You're <%= progress %>% through today's tasks.
+                        <% } %>
+                    </p>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <span>Current Streak</span>
+                        <span class="stat-icon">🔥</span>
+                    </div>
+
+                    <div class="stat-value">0</div>
+
+                    <p class="stat-description">
+                        Days of consistent execution.
+                    </p>
+                </div>
+
+            </section>
+
+
+            <!-- MAIN GRID -->
+            <section class="content-grid">
+
+                <!-- TODAY'S EXECUTION -->
+                <div class="panel tasks-panel">
+
+                    <div class="panel-header">
+
+                        <div>
+                            <p class="panel-label">TODAY</p>
+                            <h2>Today's Execution</h2>
+                        </div>
+
+                        <button class="add-task-btn" onclick="openTaskForm()">
+                            + Add Task
+                        </button>
+
+                    </div>
+
+
+                    <!-- TASK LIST -->
+
+                    <div class="task-list">
+
+                        <% if (!tasks || tasks.length === 0) { %>
+
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    ✓
+                                </div>
+
+                                <h3>No tasks yet</h3>
+
+                                <p>
+                                    Add the things you need to execute today.
+                                </p>
+
+                                <button class="empty-add-btn" onclick="openTaskForm()">
+                                    + Add your first task
+                                </button>
+                            </div>
+
+                        <% } else { %>
+
+                            <% tasks.forEach(task => { %>
+
+                                <div class="task-item <%= task.completed ? 'completed' : '' %>">
+
+                                    <label class="task-checkbox">
+
+                                        <input
+                                            type="checkbox"
+                                            <%= task.completed ? 'checked' : '' %>
+                                            onchange="toggleTask(<%= task.id %>, this)"
+                                        >
+
+                                        <span class="checkmark"></span>
+
+                                    </label>
+
+                                    <span class="task-title">
+                                        <%= task.title %>
+                                    </span>
+
+                                </div>
+
+                            <% }) %>
+
+                        <% } %>
+
+                    </div>
+
+                </div>
+
+
+                <!-- DAILY SCORE -->
+                <div class="panel score-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <p class="panel-label">TODAY</p>
+                            <h2>Execution Score</h2>
+                        </div>
+                    </div>
+
+                    <div class="score-circle">
+
+                        <div class="score-inner">
+                            <strong>0</strong>
+                            <span>/ 100</span>
+                        </div>
+
+                    </div>
+
+                    <p class="score-message">
+                        Your score will appear as you complete your tasks.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- WEEKLY PERFORMANCE -->
+            <section class="panel weekly-panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <p class="panel-label">CONSISTENCY</p>
+                        <h2>Weekly Performance</h2>
+                    </div>
+
+                    <span class="period-label">
+                        Last 7 days
+                    </span>
+
+                </div>
+
+                <div class="chart-placeholder">
+
+                    <div class="chart-bars">
+
+                        <div class="bar-container">
+                            <div class="bar" style="height: 20%;"></div>
+                            <span>Mon</span>
+                        </div>
+
+                        <div class="bar-container">
+                            <div class="bar" style="height: 35%;"></div>
+                            <span>Tue</span>
+                        </div>
+
+                        <div class="bar-container">
+                            <div class="bar" style="height: 15%;"></div>
+                            <span>Wed</span>
+                        </div>
+
+                        <div class="bar-container">
+                            <div class="bar" style="height: 45%;"></div>
+                            <span>Thu</span>
+                        </div>
+
+                        <div class="bar-container">
+                            <div class="bar" style="height: 60%;"></div>
+                            <span>Fri</span>
+                        </div>
+
+                        <div class="bar-container">
+                            <div class="bar" style="height: 30%;"></div>
+                            <span>Sat</span>
+                        </div>
+
+                        <div class="bar-container">
+                            <div class="bar" style="height: 75%;"></div>
+                            <span>Sun</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <!-- TASK FORM MODAL -->
+    <div class="task-modal" id="taskModal">
+
+    <div class="task-modal-content">
+
+        <div class="task-modal-header">
+            <div>
+                <p class="panel-label">NEW TASK</p>
+                <h2>Add Task</h2>
+            </div>
+
+            <button class="modal-close" onclick="closeTaskForm()">
+                ×
+            </button>
+        </div>
+
+        <form action="/tasks" method="POST">
+
+            <input
+                type="text"
+                name="title"
+                class="task-input"
+                placeholder="What needs to be executed?"
+                maxlength="255"
+                required
+            >
+
+            <div class="task-modal-actions">
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    onclick="closeTaskForm()"
+                >
+                    Cancel
+                </button>
+
+                <button type="submit" class="save-task-btn">
+                    Add Task
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+    <script src="/js/dashboard.js"></script> 
+
+</body>
+</html>

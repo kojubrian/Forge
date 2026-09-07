@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login | Forge System</title>
+
+    <link rel="stylesheet" href="/css/auth.css">
+</head>
+
+<body>
+
+    <div class="background">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <main class="auth-container">
+
+        <div class="glass-card">
+
+            <div class="logo">
+                <span>EXECUTE</span>
+            </div>
+
+            <div class="heading">
+                <h1>Welcome back.</h1>
+                <p>Log in and get back to forge.</p>
+            </div>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="error-message">
+                    <%= error %>
+                </div>
+            <% } %>
+
+            <form action="/login" method="POST" class="login-form">
+
+                <div class="input-group">
+                    <label for="email">Email</label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <div class="password-label">
+                        <label for="password">Password</label>
+
+                        <a href="/forgot-password">
+                            Forgot password?
+                        </a>
+                    </div>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+
+                <div class="remember-me">
+                    <label>
+                        <input type="checkbox" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <span>Login</span>
+                    <span class="arrow">→</span>
+                </button>
+
+            </form>
+
+            <div class="divider">
+                <span>or</span>
+            </div>
+
+            <p class="register-text">
+                Don't have an account?
+                <a href="/register">Create one</a>
+            </p>
+
+        </div>
+
+    </main>
+
+</body>
+</html>
