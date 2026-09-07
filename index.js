@@ -57,7 +57,7 @@ app.use(express.json()); //parse json data
 app.use(express.static(path.join(__dirname, "public"))); //serve static files from the public directory
 app.use(
   session({
-    secret: "KoJuExecute",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: sessionStore,
@@ -68,6 +68,12 @@ app.use(
 );
 
 //routes
+
+// Home route
+app.get("/", (req, res) => {
+  res.redirect("/login");
+});
+
 //login page
 app.get("/login", (req, res) => {
   res.render("login", { error: null });
@@ -96,7 +102,10 @@ app.post("/login", async (req, res) => {
 
     const user = users[0];
 
-    const passwordMatch = bcrypt.compareSync(password, user.password_hash);
+    const passwordMatch = await bcrypt.compareSync(
+      password,
+      user.password_hash,
+    );
     if (!passwordMatch) {
       return res.render("login", {
         error: "Invalid email or password.",
@@ -244,7 +253,7 @@ app.post("/tasks", async (req, res) => {
       [req.session.userId, title.trim()],
     );
 
-    console.log("Taskadded:", title);
+    console.log("Task added:", title);
 
     res.redirect("/dashboard");
   } catch (err) {

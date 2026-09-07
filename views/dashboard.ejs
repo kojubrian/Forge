@@ -108,10 +108,13 @@
                         <span class="stat-icon">◔</span>
                     </div>
 
-                    <div class="stat-value"><%= progress %>%</div>
+                    <div class="stat-value" id="progressValue"><%= progress %>%</div>
 
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: <%= progress %>%;"></div>
+                        <div
+                            class="progress-fill"
+                            id="progressFill"
+                            style="width: <%= progress %>%;"></div>
                     </div>
 
                     <p class="stat-description">
@@ -126,7 +129,7 @@
                         <span class="stat-icon">✓</span>
                     </div>
 
-                    <div class="stat-value"><%= completedTasks %><span class="stat-small"> / <%= totalTasks %></span></div>
+                    <div class="stat-value" id="taskCount"><%= completedTasks %><span class="stat-small"> / <%= totalTasks %></span></div>
 
                     <p class="stat-description">
                         <% if (totalTasks === 0) { %>
@@ -244,14 +247,20 @@
                     <div class="score-circle">
 
                         <div class="score-inner">
-                            <strong>0</strong>
+                            <strong id="scoreValue"><%= progress %></strong>
                             <span>/ 100</span>
                         </div>
 
                     </div>
 
                     <p class="score-message">
-                        Your score will appear as you complete your tasks.
+                        <% if (totalTasks === 0) { %>
+                            Add some tasks to start your execution.
+                        <% } else if (progress === 100) { %>
+                            Perfect execution today.
+                        <% } else { %>
+                            Your score is based on today's completed tasks.
+                        <% } %>
                     </p>
 
                 </div>

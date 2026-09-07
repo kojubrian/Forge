@@ -37,10 +37,33 @@ async function toggleTask(taskId, checkbox) {
     } else {
       taskItem.classList.remove("completed");
     }
+
+    updateDashboardStats();
   } catch (err) {
     console.error("Error updating task:", err);
 
-    // Undo the checkbox if the database update failed
     checkbox.checked = !checkbox.checked;
   }
+}
+
+function updateDashboardStats() {
+  const taskItems = document.querySelectorAll(".task-item");
+
+  const totalTasks = taskItems.length;
+
+  const completedTasks = document.querySelectorAll(
+    ".task-item.completed",
+  ).length;
+
+  const progress =
+    totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+
+  document.getElementById("progressValue").textContent = `${progress}%`;
+
+  document.getElementById("progressFill").style.width = `${progress}%`;
+
+  document.getElementById("taskCount").innerHTML =
+    `${completedTasks} <span class="stat-small">/ ${totalTasks}</span>`;
+
+  document.getElementById("scoreValue").textContent = progress;
 }
