@@ -402,6 +402,71 @@ body {
   justify-content: flex-end;
   gap: 9px;
 }
+
+.bar-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.bar-tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+
+  min-width: 150px;
+  padding: 10px 12px;
+
+  background: #11151f;
+  border: 1px solid rgba(124, 92, 255, 0.35);
+  border-radius: 8px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  font-size: 0.75rem;
+  text-align: center;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+
+  z-index: 10;
+}
+
+.bar-tooltip strong {
+  font-size: 0.8rem;
+}
+
+.bar-tooltip span {
+  opacity: 0.75;
+}
+
+.bar-wrapper:hover .bar-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.bar-percentage {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.day-label {
+  font-size: 0.75rem;
+}
+
 .bar {
   width: 30px;
   min-height: 4px;

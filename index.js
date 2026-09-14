@@ -203,6 +203,7 @@ app.get("/dashboard", async (req, res) => {
   }
 
   try {
+    // Get today's tasks
     const [tasks] = await db.query(
       `
       SELECT id, title, completed
@@ -214,7 +215,7 @@ app.get("/dashboard", async (req, res) => {
       [req.session.userId],
     );
 
-    //calculate today's stats
+    // Today's statistics
     const totalTasks = tasks.length;
 
     const completedTasks = tasks.filter((task) => task.completed === 1).length;
@@ -222,16 +223,141 @@ app.get("/dashboard", async (req, res) => {
     const progress =
       totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
 
+    const executionScore = progress;
+
+    // Get the last 7 days of task statistics
+    const [weeklyStats] = await db.query(
+      `
+      SELECT
+        task_date,
+        COUNT(*) AS total_tasks,
+        SUM(completed) AS completed_tasks
+      FROM tasks
+      WHERE user_id = ?
+      AND task_date >= CURDATE() - INTERVAL 6 DAY
+      AND task_date <= CURDATE()
+      GROUP BY task_date
+      ORDER BY task_date ASC
+      `,
+      [req.session.userId],
+    );
+
+    // Create a lookup for the days returned by MySQL
+    const weeklyLookup = {};
+
+    weeklyStats.forEach((day) => {
+      const dateKey = new Date(day.task_date).toISOString().split("T")[0];
+
+      weeklyLookup[dateKey] = {
+        totalTasks: Number(day.total_tasks),
+        completedTasks: Number(day.completed_tasks),
+      };
+    });
+
+    // Build all 7 days
+    const weeklyPerformance = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+
+      date.setDate(date.getDate() - i);
+
+      const dateKey = date.toISOString().split("T")[0];
+
+      const dayStats = weeklyLookup[dateKey];
+
+      const total = dayStats ? dayStats.totalTasks : 0;
+      const completed = dayStats ? dayStats.completedTasks : 0;
+
+      const percentage =
+        total === 0 ? 0 : Math.round((completed / total) * 100);
+
+      weeklyPerformance.push({
+        date: dateKey,
+        totalTasks: total,
+        completedTasks: completed,
+        percentage: percentage,
+      });
+    }
+
+    // Get historical daily task statistics
+    const [dailyStats] = await db.query(
+      `
+      SELECT
+        DATE_FORMAT(task_date, '%Y-%m-%d') AS task_date,
+        COUNT(*) AS total_tasks,
+        SUM(completed) AS completed_tasks
+      FROM tasks
+      WHERE user_id = ?
+      GROUP BY task_date
+      ORDER BY task_date DESC
+      `,
+      [req.session.userId],
+    );
+
+    // Create a lookup object for each day
+    const dailyPerformance = {};
+
+    dailyStats.forEach((day) => {
+      dailyPerformance[day.task_date] = {
+        total: Number(day.total_tasks),
+        completed: Number(day.completed_tasks),
+      };
+    });
+
+    // Calculate current streak
+    let currentStreak = 0;
+
+    const today = new Date();
+
+    // Check today first
+    const todayKey = today.toISOString().split("T")[0];
+    const todayStats = dailyPerformance[todayKey];
+
+    if (
+      todayStats &&
+      todayStats.total > 0 &&
+      todayStats.completed === todayStats.total
+    ) {
+      currentStreak = 1;
+    }
+
+    // Start checking previous days
+    const checkDate = new Date(today);
+    checkDate.setUTCDate(checkDate.getUTCDate() - 1);
+
+    while (true) {
+      const dateKey = checkDate.toISOString().split("T")[0];
+      const dayStats = dailyPerformance[dateKey];
+
+      if (
+        !dayStats ||
+        dayStats.total === 0 ||
+        dayStats.completed !== dayStats.total
+      ) {
+        break;
+      }
+
+      currentStreak++;
+
+      checkDate.setUTCDate(checkDate.getUTCDate() - 1);
+    }
+
     res.render("dashboard", {
       userName: req.session.userName,
       tasks: tasks,
       totalTasks: totalTasks,
       completedTasks: completedTasks,
       progress: progress,
+      executionScore: executionScore,
+      currentStreak: currentStreak,
+      weeklyStats: weeklyStats,
+      weeklyPerformance: weeklyPerformance,
     });
   } catch (err) {
     console.error("Error loading dashboard:", err);
-    res.status(500).send("Something went wrong. Please try again.");
+
+    res.status(500).send("Something went wrong loading the dashboard.");
   }
 });
 
