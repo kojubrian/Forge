@@ -56,10 +56,67 @@ async function toggleTask(taskId, checkbox) {
     }
 
     updateDashboardStats();
+    updateWeeklyBar();
   } catch (err) {
     console.error("Error updating task:", err);
 
     checkbox.checked = !checkbox.checked;
+  }
+}
+
+function updateWeeklyBar() {
+  const today = new Date();
+
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  const todayDate = `${year}-${month}-${day}`;
+
+  const todayBar = document.querySelector(
+    `.bar-container[data-date="${todayDate}"]`,
+  );
+
+  if (!todayBar) return;
+
+  const taskItems = document.querySelectorAll(".task-item");
+
+  const totalTasks = taskItems.length;
+
+  const completedTasks = document.querySelectorAll(
+    ".task-item.completed",
+  ).length;
+
+  const percentage =
+    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  // Update bar height
+  const bar = todayBar.querySelector(".bar");
+
+  if (bar) {
+    bar.style.height = `${percentage}%`;
+  }
+
+  // Update percentage displayed above the bar
+  const percentageLabel = todayBar.querySelector(".bar-percentage");
+
+  if (percentageLabel) {
+    percentageLabel.textContent = `${percentage}%`;
+  }
+
+  // Update tooltip
+  const tooltip = todayBar.querySelector(".bar-tooltip");
+
+  if (tooltip) {
+    const spans = tooltip.querySelectorAll("span");
+
+    if (spans[0]) {
+      spans[0].textContent = `${percentage}% completed`;
+    }
+
+    if (spans[1]) {
+      spans[1].textContent = `${completedTasks} of ${totalTasks} tasks`;
+    }
   }
 }
 
