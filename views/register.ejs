@@ -68,6 +68,7 @@
                         required
                         autocomplete="name"
                     >
+                    <small id="nameFeedback" class="validation-message"></small>
 
                 </div>
 
@@ -87,6 +88,7 @@
                         required
                         autocomplete="email"
                     >
+                    <small id="emailFeedback" class="validation-message"></small>
 
                 </div>
 
@@ -108,7 +110,7 @@
                         autocomplete="new-password"
                     >
 
-                    <small class="input-hint">
+                    <small id="passwordFeedback" class="validation-message">
                         Use at least 8 characters.
                     </small>
 
@@ -131,6 +133,7 @@
                         minlength="8"
                         autocomplete="new-password"
                     >
+                    <small id="confirmPasswordFeedback" class="validation-message"></small>
 
                 </div>
 
@@ -194,6 +197,8 @@
         </div>
 
     </main>
+
+    <script src="/js/register.js"></script>
 
 </body>
 </html>

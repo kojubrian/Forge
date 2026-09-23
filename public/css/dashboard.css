@@ -484,6 +484,13 @@ body {
   color: var(--muted);
   font-size: 10px;
 }
+
+.weekly-message {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
 /* =========================
    RESPONSIVE
 ========================= */

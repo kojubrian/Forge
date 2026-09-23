@@ -417,3 +417,18 @@ body {
     margin: auto 0;
   }
 }
+
+.validation-message {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  min-height: 18px;
+}
+
+.validation-message.error {
+  color: #ff6b6b;
+}
+
+.validation-message.success {
+  color: #51cf66;
+}

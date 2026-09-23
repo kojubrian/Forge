@@ -67,7 +67,46 @@ app.use(
   }),
 );
 
-//routes
+app.get("/check-availability", async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.json({
+        available: false,
+        error: "Email is required.",
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(cleanEmail)) {
+      return res.json({
+        available: false,
+        error: "Invalid email.",
+      });
+    }
+
+    const [users] = await db.query("SELECT id FROM users WHERE email = ?", [
+      cleanEmail,
+    ]);
+
+    res.json({
+      available: users.length === 0,
+    });
+  } catch (err) {
+    console.error("Email availability check error:", err);
+
+    res.status(500).json({
+      available: false,
+      error: "Unable to check email availability.",
+    });
+  }
+});
+
+//ROUTES
 
 // Home route
 app.get("/", (req, res) => {
@@ -79,21 +118,36 @@ app.get("/login", (req, res) => {
   res.render("login", { error: null });
 });
 
-//login form
+// Login form
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
+  // Clean up input
+  const cleanEmail = email?.trim().toLowerCase();
+
+  // Server-side validation
+  if (!cleanEmail || !password) {
     return res.render("login", {
       error: "Please enter both email and password.",
     });
   }
 
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(cleanEmail)) {
+    return res.render("login", {
+      error: "Please enter a valid email address.",
+    });
+  }
+
   try {
+    // Find user
     const [users] = await db.query("SELECT * FROM users WHERE email = ?", [
-      email,
+      cleanEmail,
     ]);
 
+    // Don't reveal whether the email exists
     if (users.length === 0) {
       return res.render("login", {
         error: "Invalid email or password.",
@@ -102,17 +156,16 @@ app.post("/login", async (req, res) => {
 
     const user = users[0];
 
-    const passwordMatch = await bcrypt.compareSync(
-      password,
-      user.password_hash,
-    );
+    // Compare submitted password with bcrypt hash
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+
     if (!passwordMatch) {
       return res.render("login", {
         error: "Invalid email or password.",
       });
     }
 
-    //Create a session for the user
+    // Create session
     req.session.userId = user.id;
     req.session.userName = user.username;
     req.session.email = user.email;
@@ -122,6 +175,7 @@ app.post("/login", async (req, res) => {
     res.redirect("/dashboard");
   } catch (err) {
     console.error("Error during login:", err);
+
     res.status(500).render("login", {
       error: "Something went wrong. Please try again.",
     });
@@ -135,33 +189,69 @@ app.get("/register", (req, res) => {
   });
 });
 
+// Register form
 app.post("/register", async (req, res) => {
   try {
     const { userName, email, password, confirmPassword, terms } = req.body;
 
-    // Basic validation
-    if (!userName || !email || !password || !confirmPassword) {
+    // Clean up input
+    const cleanUserName = userName?.trim();
+    const cleanEmail = email?.trim().toLowerCase();
+
+    // Required fields
+    if (!cleanUserName || !cleanEmail || !password || !confirmPassword) {
       return res.render("register", {
         error: "Please fill in all required fields.",
       });
     }
 
+    // Username validation
+    if (cleanUserName.length < 2) {
+      return res.render("register", {
+        error: "Your name must be at least 2 characters long.",
+      });
+    }
+
+    if (cleanUserName.length > 100) {
+      return res.render("register", {
+        error: "Your name is too long.",
+      });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(cleanEmail)) {
+      return res.render("register", {
+        error: "Please enter a valid email address.",
+      });
+    }
+
+    // Password length
+    if (password.length < 8) {
+      return res.render("register", {
+        error: "Password must be at least 8 characters long.",
+      });
+    }
+
+    // Confirm password
     if (password !== confirmPassword) {
       return res.render("register", {
         error: "Passwords do not match.",
       });
     }
 
+    // Terms
     if (!terms) {
       return res.render("register", {
         error: "You must accept the terms and conditions.",
       });
     }
 
-    // Check if username or email already exists
+    // Check whether email or username already exists
     const [existingUsers] = await db.query(
       "SELECT id FROM users WHERE email = ? OR username = ?",
-      [email, userName],
+      [cleanEmail, cleanUserName],
     );
 
     if (existingUsers.length > 0) {
@@ -175,20 +265,29 @@ app.post("/register", async (req, res) => {
 
     // Save user
     const [result] = await db.query(
-      "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-      [userName, email, passwordHash],
+      `INSERT INTO users
+       (username, email, password_hash)
+       VALUES (?, ?, ?)`,
+      [cleanUserName, cleanEmail, passwordHash],
     );
 
-    console.log(`User registered: ${userName} (${email})`);
+    console.log(`User registered: ${cleanUserName} (${cleanEmail})`);
 
     // Automatically log in
     req.session.userId = result.insertId;
-    req.session.userName = userName;
-    req.session.email = email;
+    req.session.userName = cleanUserName;
+    req.session.email = cleanEmail;
 
     res.redirect("/dashboard");
   } catch (err) {
     console.error("Registration error:", err);
+
+    // Handle database duplicate errors as a final safeguard
+    if (err.code === "ER_DUP_ENTRY") {
+      return res.render("register", {
+        error: "Username or email already exists.",
+      });
+    }
 
     res.status(500).render("register", {
       error: "Something went wrong. Please try again.",
@@ -229,7 +328,7 @@ app.get("/dashboard", async (req, res) => {
     const [weeklyStats] = await db.query(
       `
       SELECT
-        task_date,
+        DATE_FORMAT(task_date, '%Y-%m-%d') AS task_date,
         COUNT(*) AS total_tasks,
         SUM(completed) AS completed_tasks
       FROM tasks
@@ -278,6 +377,29 @@ app.get("/dashboard", async (req, res) => {
         completedTasks: completed,
         percentage: percentage,
       });
+    }
+
+    // Calculate weekly average
+    const weeklyAverage =
+      weeklyPerformance.length === 0
+        ? 0
+        : Math.round(
+            weeklyPerformance.reduce((sum, day) => sum + day.percentage, 0) /
+              weeklyPerformance.length,
+          );
+
+    let weeklyMessage;
+
+    if (weeklyAverage === 100) {
+      weeklyMessage = "Perfect week. Every task was completed.";
+    } else if (weeklyAverage >= 75) {
+      weeklyMessage = "Strong consistency. Keep the momentum going.";
+    } else if (weeklyAverage >= 50) {
+      weeklyMessage = "Solid consistency. Keep executing.";
+    } else if (weeklyAverage >= 25) {
+      weeklyMessage = "You're getting started. Keep building consistency.";
+    } else {
+      weeklyMessage = "Keep executing. Consistency starts with showing up.";
     }
 
     // Get historical daily task statistics
@@ -353,6 +475,8 @@ app.get("/dashboard", async (req, res) => {
       currentStreak: currentStreak,
       weeklyStats: weeklyStats,
       weeklyPerformance: weeklyPerformance,
+      weeklyAverage: weeklyAverage,
+      weeklyMessage: weeklyMessage,
     });
   } catch (err) {
     console.error("Error loading dashboard:", err);

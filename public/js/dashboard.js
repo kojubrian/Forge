@@ -118,6 +118,51 @@ function updateWeeklyBar() {
       spans[1].textContent = `${completedTasks} of ${totalTasks} tasks`;
     }
   }
+
+  // Calculate the 7-day average
+  const bars = document.querySelectorAll(".bar-container");
+
+  let totalPercentage = 0;
+
+  bars.forEach((barContainer) => {
+    const bar = barContainer.querySelector(".bar");
+
+    if (bar) {
+      const height = parseFloat(bar.style.height) || 0;
+      totalPercentage += height;
+    }
+  });
+
+  const weeklyAverage =
+    bars.length > 0 ? Math.round(totalPercentage / bars.length) : 0;
+
+  // Update weekly average
+  const weeklyAverageElement = document.getElementById("weeklyAverage");
+
+  if (weeklyAverageElement) {
+    weeklyAverageElement.textContent = `${weeklyAverage}%`;
+  }
+
+  // Update weekly message
+  let weeklyMessage;
+
+  if (weeklyAverage === 100) {
+    weeklyMessage = "Perfect week. Every task was completed.";
+  } else if (weeklyAverage >= 75) {
+    weeklyMessage = "Strong consistency. Keep the momentum going.";
+  } else if (weeklyAverage >= 50) {
+    weeklyMessage = "Solid consistency. Keep executing.";
+  } else if (weeklyAverage >= 25) {
+    weeklyMessage = "You're getting started. Keep building consistency.";
+  } else {
+    weeklyMessage = "Keep executing. Consistency starts with showing up.";
+  }
+
+  const weeklyMessageElement = document.getElementById("weeklyMessage");
+
+  if (weeklyMessageElement) {
+    weeklyMessageElement.textContent = weeklyMessage;
+  }
 }
 
 function updateDashboardStats() {
