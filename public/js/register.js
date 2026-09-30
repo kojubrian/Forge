@@ -33,7 +33,6 @@ nameInput.addEventListener("input", () => {
   nameFeedback.className = "validation-message success";
 });
 
-// Email validation + availability check
 // Email validation + live availability check
 let emailCheckTimeout;
 
@@ -66,6 +65,9 @@ emailInput.addEventListener("input", () => {
     try {
       const response = await fetch(
         `/check-availability?email=${encodeURIComponent(email)}`,
+        {
+          cache: "no-store",
+        },
       );
 
       if (!response.ok) {

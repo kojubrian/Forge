@@ -68,6 +68,9 @@ app.use(
 );
 
 app.get("/check-availability", async (req, res) => {
+  // Prevent browser caching
+  res.set("Cache-Control", "no-store");
+
   try {
     const { email } = req.query;
 
@@ -79,7 +82,6 @@ app.get("/check-availability", async (req, res) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(cleanEmail)) {
@@ -192,27 +194,27 @@ app.get("/register", (req, res) => {
 // Register form
 app.post("/register", async (req, res) => {
   try {
-    const { userName, email, password, confirmPassword, terms } = req.body;
+    const { fullName, email, password, confirmPassword, terms } = req.body;
 
     // Clean up input
-    const cleanUserName = userName?.trim();
+    const cleanFullName = fullName?.trim();
     const cleanEmail = email?.trim().toLowerCase();
 
     // Required fields
-    if (!cleanUserName || !cleanEmail || !password || !confirmPassword) {
+    if (!cleanFullName || !cleanEmail || !password || !confirmPassword) {
       return res.render("register", {
         error: "Please fill in all required fields.",
       });
     }
 
     // Username validation
-    if (cleanUserName.length < 2) {
+    if (cleanFullName.length < 2) {
       return res.render("register", {
         error: "Your name must be at least 2 characters long.",
       });
     }
 
-    if (cleanUserName.length > 100) {
+    if (cleanFullName.length > 100) {
       return res.render("register", {
         error: "Your name is too long.",
       });
@@ -248,15 +250,15 @@ app.post("/register", async (req, res) => {
       });
     }
 
-    // Check whether email or username already exists
+    // Check whether user already exists using email
     const [existingUsers] = await db.query(
-      "SELECT id FROM users WHERE email = ? OR username = ?",
-      [cleanEmail, cleanUserName],
+      "SELECT id FROM users WHERE email = ?",
+      [cleanEmail],
     );
 
     if (existingUsers.length > 0) {
       return res.render("register", {
-        error: "Username or email already exists.",
+        error: "An account with this email already exists.",
       });
     }
 
@@ -266,16 +268,16 @@ app.post("/register", async (req, res) => {
     // Save user
     const [result] = await db.query(
       `INSERT INTO users
-       (username, email, password_hash)
+       (full_name, email, password_hash)
        VALUES (?, ?, ?)`,
-      [cleanUserName, cleanEmail, passwordHash],
+      [cleanFullName, cleanEmail, passwordHash],
     );
 
-    console.log(`User registered: ${cleanUserName} (${cleanEmail})`);
+    console.log(`User registered: ${cleanFullName} (${cleanEmail})`);
 
     // Automatically log in
     req.session.userId = result.insertId;
-    req.session.userName = cleanUserName;
+    req.session.userName = cleanFullName;
     req.session.email = cleanEmail;
 
     res.redirect("/dashboard");
