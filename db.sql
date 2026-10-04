@@ -30,3 +30,18 @@ CREATE TABLE tasks (
         REFERENCES users(id)
         ON DELETE CASCADE
 );
+
+CREATE TABLE goals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(100),
+    start_date DATE NOT NULL,
+    target_date DATE,
+    status ENUM('active', 'completed', 'archived') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE
+);

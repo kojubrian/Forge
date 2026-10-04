@@ -563,6 +563,115 @@ app.post("/tasks/:id/toggle", async (req, res) => {
   }
 });
 
+app.get("/goals", async (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+
+  try {
+    const [goals] = await db.execute(
+      `SELECT *
+       FROM goals
+       WHERE user_id = ?
+       ORDER BY created_at DESC`,
+      [req.session.userId],
+    );
+
+    res.render("goals", {
+      goals,
+      userName: req.session.userName,
+    });
+  } catch (error) {
+    console.error("Error fetching goals:", error);
+    res.status(500).send("Failed to load goals.");
+  }
+});
+
+app.post("/goals", async (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+
+  const { title, description, category, start_date, target_date } = req.body;
+
+  if (!title || !start_date) {
+    return res.status(400).send("Title and start date are required.");
+  }
+
+  try {
+    await db.execute(
+      `INSERT INTO goals
+       (user_id, title, description, category, start_date, target_date)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        req.session.userId,
+        title,
+        description || null,
+        category || null,
+        start_date,
+        target_date || null,
+      ],
+    );
+
+    res.redirect("/goals");
+  } catch (error) {
+    console.error("Error creating goal:", error);
+    res.status(500).send("Failed to create goal.");
+  }
+});
+
+app.post("/goals/:id/complete", async (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.execute(
+      `UPDATE goals
+       SET status = 'completed'
+       WHERE id = ? AND user_id = ?`,
+      [id, req.session.userId],
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).send("Goal not found.");
+    }
+
+    res.redirect("/goals");
+  } catch (error) {
+    console.error("Error completing goal:", error);
+    res.status(500).send("Failed to complete goal.");
+  }
+});
+
+app.post("/goals/:id/archive", async (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.execute(
+      `UPDATE goals
+       SET status = 'archived'
+       WHERE id = ? AND user_id = ?`,
+      [id, req.session.userId],
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).send("Goal not found.");
+    }
+
+    res.redirect("/goals");
+  } catch (error) {
+    console.error("Error archiving goal:", error);
+    res.status(500).send("Failed to archive goal.");
+  }
+});
+
 //LOGOUT route
 app.get("/logout", (req, res) => {
   req.session.destroy((err) => {

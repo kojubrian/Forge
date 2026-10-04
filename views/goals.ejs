@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Goals | Forge</title>
+
+    <link rel="stylesheet" href="/css/goals.css">
+</head>
+
+<body>
+
+    <div class="page-container">
+
+        <header class="goals-header">
+
+            <div>
+                <p class="eyebrow">FORGE</p>
+                <h1>Your Goals</h1>
+                <p class="subtitle">
+                    Define what you're working toward and stay accountable.
+                </p>
+            </div>
+
+            <button class="add-goal-btn" onclick="openGoalModal()">
+                + Add Goal
+            </button>
+
+        </header>
+
+
+        <main class="goals-content">
+
+            <% if (goals.length === 0) { %>
+
+                <section class="empty-state">
+
+                    <div class="empty-icon">
+                        🎯
+                    </div>
+
+                    <h2>No goals yet</h2>
+
+                    <p>
+                        Start by defining something meaningful you want to accomplish.
+                    </p>
+
+                    <button class="empty-add-btn" onclick="openGoalModal()">
+                        Create Your First Goal
+                    </button>
+
+                </section>
+
+            <% } else { %>
+
+                <section class="goals-grid">
+
+                    <% goals.forEach(goal => { %>
+
+                        <article class="goal-card <%= goal.status %>">
+                            
+                            <div class="goal-card-top">
+
+                                <div class="goal-heading">
+
+                                    <span class="goal-status <%= goal.status %>">
+                                        <%= goal.status %>
+                                    </span>
+
+                                    <h2>
+                                        <%= goal.title %>
+                                    </h2>
+
+                                </div>
+
+                                <% if (goal.category) { %>
+
+                                    <span class="category">
+                                        <%= goal.category %>
+                                    </span>
+
+                                <% } %>
+
+                            </div>
+
+
+                            <% if (goal.description) { %>
+
+                                <p class="goal-description">
+                                    <%= goal.description %>
+                                </p>
+
+                            <% } %>
+
+
+                            <div class="goal-meta">
+
+                                <div class="meta-item">
+
+                                    <span class="meta-label">
+                                        START
+                                    </span>
+
+                                    <strong>
+                                        <%= goal.start_date instanceof Date
+                                            ? goal.start_date.toISOString().split('T')[0]
+                                            : goal.start_date %>
+                                    </strong>
+
+                                </div>
+
+
+                                <div class="meta-item">
+
+                                    <span class="meta-label">
+                                        TARGET
+                                    </span>
+
+                                    <strong>
+
+                                        <% if (goal.target_date) { %>
+
+                                            <%= goal.target_date instanceof Date
+                                                ? goal.target_date.toISOString().split('T')[0]
+                                                : goal.target_date %>
+
+                                        <% } else { %>
+
+                                            No deadline
+
+                                        <% } %>
+
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="goal-progress">
+
+                                <div class="progress-header">
+
+                                    <span>
+                                        Goal Progress
+                                    </span>
+
+                                    <strong>
+                                        0%
+                                    </strong>
+
+                                </div>
+
+                                <div class="progress-track">
+
+                                    <div
+                                        class="progress-fill"
+                                        style="width: 0%;"
+                                    ></div>
+
+                                </div>
+
+                                <p class="progress-note">
+                                    Progress will be calculated from your completed tasks.
+                                </p>
+
+                            </div>
+
+
+                            <% if (goal.status === "active") { %>
+
+                                <div class="goal-actions">
+
+                                    <form
+                                        action="/goals/<%= goal.id %>/complete"
+                                        method="POST"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="complete-btn"
+                                        >
+                                            ✓ Mark Complete
+                                        </button>
+
+                                    </form>
+
+
+                                    <form
+                                        action="/goals/<%= goal.id %>/archive"
+                                        method="POST"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="archive-btn"
+                                        >
+                                            Archive
+                                        </button>
+
+                                    </form>
+
+                                </div>
+
+                            <% } else if (goal.status === "completed") { %>
+
+                                <div class="completed-message">
+                                    ✓ Goal completed
+                                </div>
+
+                            <% } else if (goal.status === "archived") { %>
+
+                                <div class="archived-message">
+                                    Goal archived
+                                </div>
+
+                            <% } %>
+
+                        </article>
+
+
+                    <% }) %>
+
+                </section>
+
+            <% } %>
+
+        </main>
+
+    </div>
+
+
+    <!-- CREATE GOAL MODAL -->
+
+    <div id="goalModal" class="modal-overlay">
+
+        <div class="modal">
+
+            <button
+                class="close-modal"
+                onclick="closeGoalModal()"
+                aria-label="Close"
+            >
+                &times;
+            </button>
+
+            <div class="modal-header">
+
+                <p class="eyebrow">NEW GOAL</p>
+
+                <h2>Create a Goal</h2>
+
+                <p>
+                    Define something you want to accomplish.
+                </p>
+
+            </div>
+
+
+            <form action="/goals" method="POST" class="goal-form">
+
+                <div class="form-group">
+
+                    <label for="title">
+                        Goal title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        placeholder="e.g. Become a Full-Stack Developer"
+                        maxlength="255"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="description">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="description"
+                        name="description"
+                        placeholder="What does achieving this goal mean to you?"
+                        rows="4"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-row">
+
+                    <div class="form-group">
+
+                        <label for="category">
+                            Category
+                        </label>
+
+                        <select id="category" name="category">
+
+                            <option value="">
+                                Select category
+                            </option>
+
+                            <option value="Learning">
+                                Learning
+                            </option>
+
+                            <option value="Career">
+                                Career
+                            </option>
+
+                            <option value="Personal">
+                                Personal
+                            </option>
+
+                            <option value="Health">
+                                Health
+                            </option>
+
+                            <option value="Finance">
+                                Finance
+                            </option>
+
+                            <option value="Other">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="start_date">
+                            Start date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="start_date"
+                            name="start_date"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="target_date">
+                        Target date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="target_date"
+                        name="target_date"
+                    >
+
+                </div>
+
+
+                <button type="submit" class="submit-goal-btn">
+                    Create Goal
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <script src="/js/goals.js"></script>
+
+</body>
+</html>
