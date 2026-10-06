@@ -563,6 +563,71 @@ app.post("/tasks/:id/toggle", async (req, res) => {
   }
 });
 
+function validateGoal({
+  title,
+  description,
+  category,
+  start_date,
+  target_date,
+}) {
+  const errors = [];
+
+  // Title
+  if (!title || !title.trim()) {
+    errors.push("Goal title is required.");
+  } else if (title.trim().length > 255) {
+    errors.push("Goal title must be 255 characters or less.");
+  }
+
+  // Description
+  if (description && description.length > 2000) {
+    errors.push("Goal description must be 2000 characters or less.");
+  }
+
+  // Category
+  const allowedCategories = [
+    "Learning",
+    "Career",
+    "Personal",
+    "Health",
+    "Finance",
+    "Other",
+  ];
+
+  if (category && !allowedCategories.includes(category)) {
+    errors.push("Invalid goal category.");
+  }
+
+  // Start date
+  if (!start_date) {
+    errors.push("Start date is required.");
+  }
+
+  // Target date
+  if (target_date && start_date) {
+    const start = new Date(start_date);
+    const target = new Date(target_date);
+
+    if (Number.isNaN(start.getTime())) {
+      errors.push("Invalid start date.");
+    }
+
+    if (Number.isNaN(target.getTime())) {
+      errors.push("Invalid target date.");
+    }
+
+    if (
+      !Number.isNaN(start.getTime()) &&
+      !Number.isNaN(target.getTime()) &&
+      target < start
+    ) {
+      errors.push("Target date cannot be before the start date.");
+    }
+  }
+
+  return errors;
+}
+
 app.get("/goals", async (req, res) => {
   if (!req.session.userId) {
     return res.redirect("/login");
@@ -594,8 +659,16 @@ app.post("/goals", async (req, res) => {
 
   const { title, description, category, start_date, target_date } = req.body;
 
-  if (!title || !start_date) {
-    return res.status(400).send("Title and start date are required.");
+  const { errors } = validateGoal({
+    title,
+    description,
+    category,
+    start_date,
+    target_date,
+  });
+
+  if (errors.length > 0) {
+    return res.status(400).send(errors.join("<br>"));
   }
 
   try {
@@ -605,8 +678,8 @@ app.post("/goals", async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
         req.session.userId,
-        title,
-        description || null,
+        title.trim(),
+        description ? description.trim() : null,
         category || null,
         start_date,
         target_date || null,
@@ -631,12 +704,14 @@ app.post("/goals/:id/complete", async (req, res) => {
     const [result] = await db.execute(
       `UPDATE goals
        SET status = 'completed'
-       WHERE id = ? AND user_id = ?`,
+       WHERE id = ?
+       AND user_id = ?
+       AND status = 'active'`,
       [id, req.session.userId],
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).send("Goal not found.");
+      return res.status(404).send("Active goal not found.");
     }
 
     res.redirect("/goals");
@@ -657,18 +732,106 @@ app.post("/goals/:id/archive", async (req, res) => {
     const [result] = await db.execute(
       `UPDATE goals
        SET status = 'archived'
-       WHERE id = ? AND user_id = ?`,
+       WHERE id = ?
+       AND user_id = ?
+       AND status = 'active'`,
       [id, req.session.userId],
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).send("Goal not found.");
+      return res.status(404).send("Active goal not found.");
     }
 
     res.redirect("/goals");
   } catch (error) {
     console.error("Error archiving goal:", error);
     res.status(500).send("Failed to archive goal.");
+  }
+});
+
+app.get("/goals/:id/edit", async (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+
+  const { id } = req.params;
+
+  try {
+    const [goals] = await db.execute(
+      `SELECT *
+       FROM goals
+       WHERE id = ?
+       AND user_id = ?
+       AND status = 'active'`,
+      [id, req.session.userId],
+    );
+
+    if (goals.length === 0) {
+      return res.status(404).send("Active goal not found.");
+    }
+
+    res.render("edit-goal", {
+      goal: goals[0],
+      userName: req.session.userName,
+    });
+  } catch (error) {
+    console.error("Error loading goal:", error);
+    res.status(500).send("Failed to load goal.");
+  }
+});
+
+app.post("/goals/:id/edit", async (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+
+  const { id } = req.params;
+
+  const { title, description, category, start_date, target_date } = req.body;
+
+  const errors = validateGoal({
+    title,
+    description,
+    category,
+    start_date,
+    target_date,
+  });
+
+  if (errors.length > 0) {
+    return res.status(400).send(errors.join("<br>"));
+  }
+
+  try {
+    const [result] = await db.execute(
+      `UPDATE goals
+       SET
+         title = ?,
+         description = ?,
+         category = ?,
+         start_date = ?,
+         target_date = ?
+       WHERE id = ?
+       AND user_id = ?
+       AND status = 'active'`,
+      [
+        title.trim(),
+        description ? description.trim() : null,
+        category || null,
+        start_date,
+        target_date || null,
+        id,
+        req.session.userId,
+      ],
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).send("Active goal not found.");
+    }
+
+    res.redirect("/goals");
+  } catch (error) {
+    console.error("Error updating goal:", error);
+    res.status(500).send("Failed to update goal.");
   }
 });
 

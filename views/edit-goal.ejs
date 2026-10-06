@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Edit Goal | Forge</title>
+
+    <link rel="stylesheet" href="/css/goals.css">
+
+</head>
+
+
+<body>
+
+    <div class="page-container">
+
+        <header class="goals-header">
+
+            <div>
+
+                <p class="eyebrow">
+                    FORGE
+                </p>
+
+                <h1>
+                    Edit Goal
+                </h1>
+
+                <p class="subtitle">
+                    Update your goal details.
+                </p>
+
+            </div>
+
+        </header>
+
+
+        <main class="edit-goal-container">
+
+            <section class="modal edit-goal-card">
+
+                <div class="modal-header">
+
+                    <p class="eyebrow">
+                        EDIT GOAL
+                    </p>
+
+                    <h2>
+                        <%= goal.title %>
+                    </h2>
+
+                    <p>
+                        Make changes to your goal below.
+                    </p>
+
+                </div>
+
+
+                <form
+                    action="/goals/<%= goal.id %>/edit"
+                    method="POST"
+                    class="goal-form"
+                >
+
+                    <div class="form-group">
+
+                        <label for="title">
+                            Goal title
+                        </label>
+
+                        <input
+                            type="text"
+                            id="title"
+                            name="title"
+                            value="<%= goal.title %>"
+                            maxlength="255"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="description">
+                            Description
+                        </label>
+
+                        <textarea
+                            id="description"
+                            name="description"
+                            rows="4"
+                            placeholder="What does achieving this goal mean to you?"
+                        ><%= goal.description || "" %></textarea>
+
+                    </div>
+
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+
+                            <label for="category">
+                                Category
+                            </label>
+
+                            <select
+                                id="category"
+                                name="category"
+                            >
+
+                                <option value="">
+                                    Select category
+                                </option>
+
+                                <option
+                                    value="Learning"
+                                    <%= goal.category === "Learning" ? "selected" : "" %>
+                                >
+                                    Learning
+                                </option>
+
+                                <option
+                                    value="Career"
+                                    <%= goal.category === "Career" ? "selected" : "" %>
+                                >
+                                    Career
+                                </option>
+
+                                <option
+                                    value="Personal"
+                                    <%= goal.category === "Personal" ? "selected" : "" %>
+                                >
+                                    Personal
+                                </option>
+
+                                <option
+                                    value="Health"
+                                    <%= goal.category === "Health" ? "selected" : "" %>
+                                >
+                                    Health
+                                </option>
+
+                                <option
+                                    value="Finance"
+                                    <%= goal.category === "Finance" ? "selected" : "" %>
+                                >
+                                    Finance
+                                </option>
+
+                                <option
+                                    value="Other"
+                                    <%= goal.category === "Other" ? "selected" : "" %>
+                                >
+                                    Other
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="start_date">
+                                Start date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="start_date"
+                                name="start_date"
+                                value="<%= goal.start_date instanceof Date
+                                    ? goal.start_date.toISOString().split('T')[0]
+                                    : goal.start_date %>"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="target_date">
+                            Target date
+                        </label>
+
+                        <input
+                            type="date"
+                            id="target_date"
+                            name="target_date"
+                            value="<%= goal.target_date
+                                ? (goal.target_date instanceof Date
+                                    ? goal.target_date.toISOString().split('T')[0]
+                                    : goal.target_date)
+                                : "" %>"
+                        >
+
+                    </div>
+
+
+                    <div class="edit-actions">
+
+                        <a
+                            href="/goals"
+                            class="cancel-btn"
+                        >
+                            Cancel
+                        </a>
+
+                        <button
+                            type="submit"
+                            class="submit-goal-btn"
+                        >
+                            Save Changes
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script src="/js/edit-goal.js"></script> 
+
+</body>
+
+</html>

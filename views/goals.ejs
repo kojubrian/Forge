@@ -172,10 +172,18 @@
 
                                 <div class="goal-actions">
 
-                                    <form
-                                        action="/goals/<%= goal.id %>/complete"
-                                        method="POST"
+                                    <a
+                                        href="/goals/<%= goal.id %>/edit"
+                                        class="edit-btn"
                                     >
+                                        Edit
+                                    </a>
+
+                                    <form
+                                    action="/goals/<%= goal.id %>/complete"
+                                    method="POST"
+                                    onsubmit="return confirmComplete()"
+                                >
 
                                         <button
                                             type="submit"
@@ -186,10 +194,10 @@
 
                                     </form>
 
-
                                     <form
                                         action="/goals/<%= goal.id %>/archive"
                                         method="POST"
+                                        onsubmit="return confirmArchive()"
                                     >
 
                                         <button
@@ -289,6 +297,7 @@
                         name="description"
                         placeholder="What does achieving this goal mean to you?"
                         rows="4"
+                        maxlength="2000" 
                     ></textarea>
 
                 </div>
