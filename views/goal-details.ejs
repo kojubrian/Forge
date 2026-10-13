@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= goal.title %> | Forge</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/goal-details.css">
+</head>
+<body>
+  <main class="goal-details-container">
+    <nav class="goal-navigation">
+      <a href="/goals">← All Goals</a>
+      <a href="/dashboard">Dashboard</a>
+    </nav>
+
+    <section class="goal-header">
+      <p class="goal-category"><%= goal.category || "Other" %></p>
+      <h1><%= goal.title %></h1>
+
+      <% if (goal.description) { %>
+        <p class="goal-description"><%= goal.description %></p>
+      <% } %>
+
+      <div class="goal-dates">
+        <span>Started: <%= new Date(goal.start_date).toLocaleDateString() %></span>
+        <span>Target: <%= goal.target_date
+          ? new Date(goal.target_date).toLocaleDateString()
+          : "No deadline" %></span>
+      </div>
+    </section>
+
+    <section class="goal-progress-card">
+      <div class="progress-heading">
+        <h2>Task Progress</h2>
+        <strong><%= progress %>%</strong>
+      </div>
+
+      <div class="goal-progress-track">
+        <div class="goal-progress-fill" style="width: <%= progress %>%"></div>
+      </div>
+
+      <p>
+        <%= completedTasks %> of <%= totalTasks %> tasks completed
+      </p>
+
+      <% if (totalTasks === 0) { %>
+        <p>No tasks linked yet. Add your first task below.</p>
+      <% } %>
+    </section>
+
+    <section class="goal-tasks-card">
+      <h2>Tasks for this goal</h2>
+
+      <form action="/goals/<%= goal.id %>/tasks" method="POST"
+            class="add-goal-task-form">
+        <input
+          type="text"
+          name="title"
+          maxlength="255"
+          placeholder="What task will move this goal forward?"
+          required
+        >
+        <button type="submit">Add Task</button>
+      </form>
+
+      <% if (tasks.length > 0) { %>
+        <ul class="goal-task-list">
+          <% tasks.forEach((task) => { %>
+            <li class="goal-task-item <%= task.completed ? 'completed' : '' %>">
+              <form action="/tasks/<%= task.id %>/toggle" method="POST">
+                <button
+                  type="submit"
+                  class="task-completion-button"
+                  aria-label="<%= task.completed ? 'Mark incomplete' : 'Mark complete' %>"
+                >
+                  <%= task.completed ? '✓' : '○' %>
+                </button>
+              </form>
+
+              <span class="goal-task-title"><%= task.title %></span>
+              <span class="goal-task-status">
+                <%= task.completed ? "Completed" : "Pending" %>
+              </span>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <p>Your goal tasks will appear here.</p>
+      <% } %>
+    </section>
+  </main>
+</body>
+</html>

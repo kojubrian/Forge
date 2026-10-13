@@ -311,6 +311,7 @@ app.get("/dashboard", async (req, res) => {
       FROM tasks
       WHERE user_id = ?
       AND task_date = CURDATE()
+      AND goal_id IS NULL
       ORDER BY created_at ASC
       `,
       [req.session.userId],
@@ -542,7 +543,7 @@ app.post("/tasks/:id/toggle", async (req, res) => {
 
     const [tasks] = await db.query(
       `
-      SELECT id, title, completed
+      SELECT id, title, completed, goal_id
       FROM tasks
       WHERE id = ?
       AND user_id = ?
@@ -550,14 +551,35 @@ app.post("/tasks/:id/toggle", async (req, res) => {
       [taskId, req.session.userId],
     );
 
-    res.json({
-      success: true,
-      completed: tasks[0].completed,
-    });
+    if (tasks.length === 0) {
+      return res.status(404).json({
+        error: "Task not found",
+      });
+    }
+
+    const task = tasks[0];
+
+    // Dashboard JavaScript requests JSON.
+    // Goal details HTML forms request a redirect.
+    const wantsJson = req.get("Accept")?.includes("application/json");
+
+    if (wantsJson) {
+      return res.json({
+        success: true,
+        completed: Boolean(task.completed),
+      });
+    }
+
+    // Return to the page where the task was completed.
+    if (task.goal_id !== null) {
+      return res.redirect(`/goals/${task.goal_id}`);
+    }
+
+    return res.redirect("/dashboard");
   } catch (err) {
     console.error("Error toggling task:", err);
 
-    res.status(500).json({
+    return res.status(500).json({
       error: "Something went wrong while updating the task.",
     });
   }
@@ -659,7 +681,7 @@ app.post("/goals", async (req, res) => {
 
   const { title, description, category, start_date, target_date } = req.body;
 
-  const { errors } = validateGoal({
+  const errors = validateGoal({
     title,
     description,
     category,
@@ -746,6 +768,108 @@ app.post("/goals/:id/archive", async (req, res) => {
   } catch (error) {
     console.error("Error archiving goal:", error);
     res.status(500).send("Failed to archive goal.");
+  }
+});
+
+app.get("/goals/:id", async (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+
+  const { id } = req.params;
+
+  try {
+    // Fetch this goal, ensuring it belongs to the logged-in user
+    const [goals] = await db.execute(
+      `SELECT *
+       FROM goals
+       WHERE id = ?
+       AND user_id = ?`,
+      [id, req.session.userId],
+    );
+
+    if (goals.length === 0) {
+      return res.status(404).send("Goal not found.");
+    }
+
+    const goal = goals[0];
+
+    // Fetch tasks associated with this goal
+    const [tasks] = await db.execute(
+      `SELECT id, title, completed, task_date, created_at
+       FROM tasks
+       WHERE goal_id = ?
+       AND user_id = ?
+       ORDER BY created_at ASC`,
+      [goal.id, req.session.userId],
+    );
+
+    // Calculate task-based progress
+    const totalTasks = tasks.length;
+
+    const completedTasks = tasks.filter((task) =>
+      Boolean(task.completed),
+    ).length;
+
+    const progress =
+      totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+
+    res.render("goal-details", {
+      goal,
+      tasks,
+      totalTasks,
+      completedTasks,
+      progress,
+      userName: req.session.userName,
+    });
+  } catch (error) {
+    console.error("Error loading goal details:", error);
+    res.status(500).send("Failed to load goal details.");
+  }
+});
+
+app.post("/goals/:id/tasks", async (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+
+  const { id } = req.params;
+  const title = typeof req.body.title === "string" ? req.body.title.trim() : "";
+
+  if (!title) {
+    return res.status(400).send("Task title is required.");
+  }
+
+  if (title.length > 255) {
+    return res.status(400).send("Task title cannot exceed 255 characters.");
+  }
+
+  try {
+    // Verify the goal belongs to this user and is still active
+    const [goals] = await db.execute(
+      `SELECT id
+       FROM goals
+       WHERE id = ?
+       AND user_id = ?
+       AND status = 'active'`,
+      [id, req.session.userId],
+    );
+
+    if (goals.length === 0) {
+      return res.status(404).send("Active goal not found.");
+    }
+
+    // Create a task linked to this goal
+    await db.execute(
+      `INSERT INTO tasks (user_id, goal_id, title, task_date)
+       VALUES (?, ?, ?, CURDATE())`,
+      [req.session.userId, goals[0].id, title],
+    );
+
+    res.redirect(`/goals/${id}`);
+  } catch (error) {
+    console.error("Error creating goal task:", error);
+    res.status(500).send("Failed to create task.");
   }
 });
 

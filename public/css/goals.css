@@ -586,6 +586,18 @@ body {
   border-color: rgba(124, 92, 255, 0.5);
 }
 
+.view-goal-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #a99aff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.view-goal-link:hover {
+  color: #c8bbff;
+}
+
 /* MOBILE */
 
 @media (max-width: 500px) {
