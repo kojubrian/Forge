@@ -338,6 +338,7 @@ app.get("/dashboard", async (req, res) => {
       WHERE user_id = ?
       AND task_date >= CURDATE() - INTERVAL 6 DAY
       AND task_date <= CURDATE()
+       AND goal_id IS NULL
       GROUP BY task_date
       ORDER BY task_date ASC
       `,
@@ -414,6 +415,7 @@ app.get("/dashboard", async (req, res) => {
         SUM(completed) AS completed_tasks
       FROM tasks
       WHERE user_id = ?
+       AND goal_id IS NULL
       GROUP BY task_date
       ORDER BY task_date DESC
       `,
@@ -814,6 +816,45 @@ app.get("/goals/:id", async (req, res) => {
     const progress =
       totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const startDate = new Date(goal.start_date);
+    startDate.setHours(0, 0, 0, 0);
+
+    const targetDate = goal.target_date ? new Date(goal.target_date) : null;
+
+    if (targetDate) {
+      targetDate.setHours(0, 0, 0, 0);
+    }
+
+    let timeProgress = 0;
+
+    if (targetDate && targetDate > startDate) {
+      const totalDuration = targetDate - startDate;
+      const elapsedDuration = today - startDate;
+
+      timeProgress = Math.round(
+        Math.min(100, Math.max(0, (elapsedDuration / totalDuration) * 100)),
+      );
+    }
+
+    const paceDifference = progress - timeProgress;
+
+    let paceStatus = "On track";
+
+    if (paceDifference > 5) {
+      paceStatus = "Ahead of schedule";
+    } else if (paceDifference < -5) {
+      paceStatus = "Behind schedule";
+    }
+
+    if (!targetDate) {
+      paceStatus = "No target date";
+    } else if (targetDate < today && goal.status !== "completed") {
+      paceStatus = "Past target date";
+    }
+
     res.render("goal-details", {
       goal,
       tasks,
@@ -821,6 +862,9 @@ app.get("/goals/:id", async (req, res) => {
       completedTasks,
       progress,
       userName: req.session.userName,
+      timeProgress,
+      paceDifference,
+      paceStatus,
     });
   } catch (error) {
     console.error("Error loading goal details:", error);

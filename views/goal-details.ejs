@@ -45,6 +45,40 @@
         <%= completedTasks %> of <%= totalTasks %> tasks completed
       </p>
 
+      
+      <div class="goal-metric">
+        <div class="goal-metric-header">
+          <span>Time Progress</span>
+          <strong><%= timeProgress %>%</strong>
+        </div>
+
+        <div class="goal-progress-track">
+          <div
+            class="goal-progress-fill time-progress-fill"
+            style="width: <%= timeProgress %>%"
+          ></div>
+        </div>
+      </div>
+
+      <div class="goal-metric">
+        <div class="goal-metric-header">
+          <span>Goal Pace</span>
+          <strong><%= paceStatus %></strong>
+        </div>
+
+        <% if (goal.target_date) { %>
+          <p class="goal-pace-difference">
+            <%= paceDifference > 0 ? "+" : "" %><%= paceDifference %>
+            percentage points compared with elapsed time
+          </p>
+        <% } else { %>
+          <p class="goal-pace-difference">
+            Set a target date to track your schedule.
+          </p>
+        <% } %>
+      </div>
+
+
       <% if (totalTasks === 0) { %>
         <p>No tasks linked yet. Add your first task below.</p>
       <% } %>
