@@ -186,3 +186,55 @@ function updateDashboardStats() {
 
   document.getElementById("scoreValue").textContent = progress;
 }
+
+/* =========================
+   GOALS OVERVIEW MODAL
+========================= */
+
+const goalsModal = document.getElementById("goalsModal");
+const openGoalsButton = document.getElementById("openGoalsOverview");
+const closeGoalsButton = document.getElementById("closeGoalsModal");
+
+let previousGoalsFocus = null;
+let previousBodyOverflow = "";
+
+function openGoalsModal() {
+  if (!goalsModal) return;
+
+  previousGoalsFocus = document.activeElement;
+  previousBodyOverflow = document.body.style.overflow;
+
+  goalsModal.classList.add("is-open");
+  goalsModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+
+  const dialog = goalsModal.querySelector(".goals-modal-content");
+  dialog?.focus();
+}
+
+function closeGoalsModal() {
+  if (!goalsModal) return;
+
+  goalsModal.classList.remove("is-open");
+  goalsModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = previousBodyOverflow;
+
+  previousGoalsFocus?.focus();
+}
+
+openGoalsButton?.addEventListener("click", openGoalsModal);
+closeGoalsButton?.addEventListener("click", closeGoalsModal);
+
+// Close when clicking the dark backdrop.
+goalsModal?.addEventListener("click", (event) => {
+  if (event.target === goalsModal) {
+    closeGoalsModal();
+  }
+});
+
+// Close when the Escape key is pressed.
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && goalsModal?.classList.contains("is-open")) {
+    closeGoalsModal();
+  }
+});

@@ -470,6 +470,101 @@ app.get("/dashboard", async (req, res) => {
       checkDate.setUTCDate(checkDate.getUTCDate() - 1);
     }
 
+    // Fetch active goals and their task progress
+    const [goalRows] = await db.query(
+      `
+      SELECT
+        g.id,
+        g.title,
+        g.category,
+        g.start_date,
+        g.target_date,
+        g.status,
+        COUNT(t.id) AS total_tasks,
+        COALESCE(SUM(t.completed), 0) AS completed_tasks
+      FROM goals g
+      LEFT JOIN tasks t
+        ON t.goal_id = g.id
+        AND t.user_id = g.user_id
+      WHERE g.user_id = ?
+        AND g.status = 'active'
+      GROUP BY
+        g.id,
+        g.title,
+        g.category,
+        g.start_date,
+        g.target_date,
+        g.status
+      ORDER BY g.created_at DESC
+      `,
+      [req.session.userId],
+    );
+
+    // Calculate progress and pace for each active goal
+    const activeGoals = goalRows.map((goal) => {
+      const totalTasks = Number(goal.total_tasks);
+      const completedTasks = Number(goal.completed_tasks);
+
+      const goalProgress =
+        totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+
+      // Parse MySQL DATE values as local calendar dates
+      const parseDateOnly = (value) => {
+        if (!value) return null;
+
+        const dateString =
+          value instanceof Date
+            ? value.toISOString().slice(0, 10)
+            : String(value).slice(0, 10);
+
+        const [year, month, day] = dateString.split("-").map(Number);
+
+        return new Date(year, month - 1, day);
+      };
+
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+
+      const startDate = parseDateOnly(goal.start_date);
+      const targetDate = parseDateOnly(goal.target_date);
+
+      let timeProgress = 0;
+      let paceStatus = "On track";
+
+      if (startDate && todayDate < startDate) {
+        paceStatus = "Not started";
+      } else if (!targetDate) {
+        paceStatus = "No target date";
+      } else if (todayDate > targetDate) {
+        timeProgress = 100;
+        paceStatus = "Past target date";
+      } else if (startDate && targetDate > startDate) {
+        const totalDuration = targetDate - startDate;
+        const elapsedDuration = todayDate - startDate;
+
+        timeProgress = Math.round(
+          Math.min(100, Math.max(0, (elapsedDuration / totalDuration) * 100)),
+        );
+
+        const difference = goalProgress - timeProgress;
+
+        if (difference > 5) {
+          paceStatus = "Ahead of schedule";
+        } else if (difference < -5) {
+          paceStatus = "Behind schedule";
+        }
+      }
+
+      return {
+        ...goal,
+        totalTasks,
+        completedTasks,
+        progress: goalProgress,
+        timeProgress,
+        paceStatus,
+      };
+    });
+
     res.render("dashboard", {
       userName: req.session.userName,
       tasks: tasks,
@@ -482,6 +577,7 @@ app.get("/dashboard", async (req, res) => {
       weeklyPerformance: weeklyPerformance,
       weeklyAverage: weeklyAverage,
       weeklyMessage: weeklyMessage,
+      activeGoals: activeGoals,
     });
   } catch (err) {
     console.error("Error loading dashboard:", err);
@@ -829,31 +925,46 @@ app.get("/goals/:id", async (req, res) => {
     }
 
     let timeProgress = 0;
+    let paceStatus = "On track";
 
-    if (targetDate && targetDate > startDate) {
+    const hasValidTargetDate =
+      targetDate && !Number.isNaN(targetDate.getTime());
+
+    const hasValidStartDate = !Number.isNaN(startDate.getTime());
+
+    const goalHasStarted = hasValidStartDate && today >= startDate;
+
+    if (goal.status === "completed") {
+      timeProgress = 100;
+      paceStatus = "Completed";
+    } else if (!hasValidStartDate) {
+      paceStatus = "Invalid start date";
+    } else if (!hasValidTargetDate) {
+      paceStatus = "No target date";
+    } else if (targetDate < today) {
+      timeProgress = 100;
+      paceStatus = "Past target date";
+    } else if (!goalHasStarted) {
+      timeProgress = 0;
+      paceStatus = "Not started";
+    } else if (targetDate > startDate) {
       const totalDuration = targetDate - startDate;
       const elapsedDuration = today - startDate;
 
       timeProgress = Math.round(
         Math.min(100, Math.max(0, (elapsedDuration / totalDuration) * 100)),
       );
+
+      const paceDifference = progress - timeProgress;
+
+      if (paceDifference > 5) {
+        paceStatus = "Ahead of schedule";
+      } else if (paceDifference < -5) {
+        paceStatus = "Behind schedule";
+      }
     }
 
     const paceDifference = progress - timeProgress;
-
-    let paceStatus = "On track";
-
-    if (paceDifference > 5) {
-      paceStatus = "Ahead of schedule";
-    } else if (paceDifference < -5) {
-      paceStatus = "Behind schedule";
-    }
-
-    if (!targetDate) {
-      paceStatus = "No target date";
-    } else if (targetDate < today && goal.status !== "completed") {
-      paceStatus = "Past target date";
-    }
 
     res.render("goal-details", {
       goal,

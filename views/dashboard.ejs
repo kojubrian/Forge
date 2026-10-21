@@ -171,6 +171,53 @@
 
             </section>
 
+            
+            <!-- MY GOALS DASHBOARD CARD -->
+            <section class="my-goals-card">
+                <div class="my-goals-info">
+                    <div class="my-goals-icon">◎</div>
+
+                    <div>
+                        <p class="panel-label">LONG-TERM EXECUTION</p>
+                        <h2>My Goals</h2>
+                        <p class="my-goals-description">
+                            Keep your daily tasks connected to what matters most.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="my-goals-summary">
+                    <div class="my-goals-stat">
+                        <span class="my-goals-number">
+                            <%= typeof activeGoals !== "undefined"
+                                ? activeGoals.length
+                                : 0 %>
+                        </span>
+                        <span class="my-goals-label">Active goals</span>
+                    </div>
+
+                    <div class="my-goals-stat">
+                        <span class="my-goals-number">
+                            <%= typeof activeGoals !== "undefined"
+                                ? activeGoals.filter(goal =>
+                                    goal.paceStatus === "On track" ||
+                                    goal.paceStatus === "Ahead of schedule"
+                                ).length
+                                : 0 %>
+                        </span>
+                        <span class="my-goals-label">On track or ahead</span>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="my-goals-button"
+                    id="openGoalsOverview"
+                >
+                    View goal overview <span aria-hidden="true">→</span>
+                </button>
+            </section>
+
 
             <!-- MAIN GRID -->
             <section class="content-grid">
@@ -364,6 +411,118 @@
         </main>
 
     </div>
+
+    
+    <!-- GOALS OVERVIEW MODAL -->
+    <div
+    class="goals-modal"
+    id="goalsModal"
+    aria-hidden="true"
+    >
+    <div
+        class="goals-modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="goalsModalTitle"
+        tabindex="-1"
+    >
+        <!-- Modal Header -->
+        <div class="goals-modal-header">
+        <div>
+            <p class="panel-label">YOUR BIGGER PICTURE</p>
+            <h2 id="goalsModalTitle">My Goals</h2>
+            <p class="goals-modal-subtitle">
+            Track progress beyond today's tasks.
+            </p>
+        </div>
+
+        <button
+            type="button"
+            class="modal-close"
+            id="closeGoalsModal"
+            aria-label="Close goals overview"
+        >
+            &times;
+        </button>
+        </div>
+
+        <!-- Goals List -->
+        <div class="goals-modal-body">
+        <% if (typeof activeGoals !== "undefined" && activeGoals.length > 0) { %>
+
+            <% activeGoals.forEach((goal) => { %>
+            <a
+                href="/goals/<%= goal.id %>"
+                class="goals-overview-item"
+            >
+                <div class="goals-overview-heading">
+                <div>
+                    <h3><%= goal.title %></h3>
+                    <p>
+                    <%= goal.completedTasks %> of
+                    <%= goal.totalTasks %> tasks completed
+                    </p>
+                </div>
+
+                <strong><%= goal.progress %>%</strong>
+                </div>
+
+                <div
+                class="goals-overview-track"
+                role="progressbar"
+                aria-label="Progress for <%= goal.title %>"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="<%= goal.progress %>"
+                >
+                <div
+                    class="goals-overview-fill"
+                    style="width: <%= goal.progress %>%"
+                ></div>
+                </div>
+
+                <div class="goals-overview-footer">
+                <span class="goal-pace-label">
+                    <%= goal.paceStatus %>
+                </span>
+
+                <span class="goal-open-link">
+                    View goal &rarr;
+                </span>
+                </div>
+            </a>
+            <% }) %>
+
+        <% } else { %>
+
+            <!-- Empty State -->
+            <div class="goals-empty-state">
+            <div class="goals-empty-icon">&compfn;</div>
+
+            <h3>No active goals yet</h3>
+
+            <p>
+                Define what you want to achieve and break it into
+                manageable tasks.
+            </p>
+
+            <a href="/goals" class="goals-primary-link">
+                Create your first goal
+            </a>
+            </div>
+
+        <% } %>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="goals-modal-footer">
+        <a href="/goals" class="goals-view-all">
+            View all goals &rarr;
+        </a>
+        </div>
+    </div>
+    </div>
+
 
     <!-- TASK FORM MODAL -->
     <div class="task-modal" id="taskModal">

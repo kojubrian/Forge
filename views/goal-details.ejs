@@ -24,7 +24,7 @@
       <% } %>
 
       <div class="goal-dates">
-        <span>Started: <%= new Date(goal.start_date).toLocaleDateString() %></span>
+        <span>Start: <%= new Date(goal.start_date).toLocaleDateString() %></span>
         <span>Target: <%= goal.target_date
           ? new Date(goal.target_date).toLocaleDateString()
           : "No deadline" %></span>
