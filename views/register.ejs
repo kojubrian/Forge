@@ -100,15 +100,27 @@
                         Password
                     </label>
 
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="Create a password"
-                        required
-                        minlength="8"
-                        autocomplete="new-password"
-                    >
+
+                    <div class="password-input-wrapper">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Create a password"
+                            required
+                            minlength="8"
+                            autocomplete="new-password"
+                        >
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            aria-label="Show password"
+                            aria-pressed="false"
+                        >
+                            <span class="eye-icon">👁️</span>
+                        </button>
+                    </div>
 
                     <small id="passwordFeedback" class="validation-message">
                         Use at least 8 characters.
@@ -118,21 +130,32 @@
 
 
                 <!-- Confirm Password -->
-                <div class="input-group">
-
+ 
                     <label for="confirmPassword">
                         Confirm Password
                     </label>
 
-                    <input
-                        type="password"
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        placeholder="Confirm your password"
-                        required
-                        minlength="8"
-                        autocomplete="new-password"
-                    >
+                    <div class="password-input-wrapper">
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            placeholder="Confirm your password"
+                            required
+                            minlength="8"
+                            autocomplete="new-password"
+                        >
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            aria-label="Show password"
+                            aria-pressed="false"
+                        >
+                            <span class="eye-icon">👁️</span>
+                        </button>
+                    </div>
+
                     <small id="confirmPasswordFeedback" class="validation-message"></small>
 
                 </div>

@@ -629,6 +629,15 @@ app.post("/tasks/:id/toggle", async (req, res) => {
       SET completed = NOT completed
       WHERE id = ?
       AND user_id = ?
+      AND (
+        goal_id IS NULL
+        OR EXISTS (
+          SELECT 1
+          FROM goals
+          WHERE goals.id = tasks.goal_id
+            AND goals.user_id = tasks.user_id
+        )
+      )
       `,
       [taskId, req.session.userId],
     );
